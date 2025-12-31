@@ -12,6 +12,7 @@ class CFR_agent:
         self.plot_strategy_sum = plot_strategy_sum
         self.infostate_map = dict()
         self.cards = []
+        self.utility_map = dict()
 
     def train(self):
         
@@ -19,10 +20,13 @@ class CFR_agent:
 
         start = time.time()
 
+        ten_percent = self.iterations//10
+        
         for i in range(self.iterations):
             
-            if i % 1000 == 0:
-                print(f"At iteraion {i}")
+            if i % ten_percent == 0:
+
+                print(f"Training {(i // ten_percent)*10}% Done at iteration {i}")
 
             self.cards = random.sample(self.game.cards, 2)
             
@@ -30,16 +34,23 @@ class CFR_agent:
 
         end = time.time()
 
-        duration = (end-start) / 60
+        duration = round((end-start),2)
 
-        print(f"Training complete in {duration} minutes!")
+        print(f"Training complete in {duration} seconds!")
 
     def CFR(self, history, pi_i, pi_i_c):
 
         if self.game.isGameFinished(history):
             
-            return self.game.getPayouts(history, self.cards)
+            if self.game.getPlayerToAct(history) == 0:
+
+                return self.game.getPayouts(history, self.cards)
         
+            else:
+
+                return -self.game.getPayouts(history, self.cards)
+
+
         player_to_act = self.game.getPlayerToAct(history)
 
 
@@ -164,5 +175,68 @@ class CFR_agent:
 
                     self.infostate_map[infostate].final_strategy[i] = 1 / len(actions)
 
+    #Recursive function to calculate expected utility
+    def expected_utility(self, history, pi_i, pi_i_c):  
         
-                    
+        if self.game.isGameFinished(history):
+
+            sign = 1 if self.game.getPlayerToAct(history) == 0 else -1
+        
+            return sign * self.game.getPayouts(history, self.cards) 
+
+        #expected utility = P(b) * v(I,b) + P(p) * v(I,p)
+
+        player = self.game.getPlayerToAct(history)
+
+        card = self.cards[player]
+
+        infostate = str(player) + str(card) + history
+
+        p_p = self.infostate_map[infostate].final_strategy[0]
+
+        p_b = self.infostate_map[infostate].final_strategy[1]
+
+        if player == 0:
+
+            v_I_p = -self.expected_utility(history + 'p', pi_i * p_p, pi_i_c)
+            v_I_b = -self.expected_utility(history + 'b', pi_i, pi_i_c * p_b)
+
+        else: 
+
+            v_I_p = -self.expected_utility(history + 'p', pi_i, pi_i_c * p_p)
+            v_I_b = -self.expected_utility(history + 'b', pi_i * p_b, pi_i_c)
+        
+        expected_utility = (p_p * v_I_p) + (p_b * v_I_b)
+
+        self.utility_map[infostate] = expected_utility
+
+        return expected_utility
+
+
+    def calculate_expected_utility(self):
+
+        all_root_states = [[0,1], [0,2],
+                           [1,0], [1,2],
+                           [2,0], [2,1]]
+
+        p1_expected_utility = 0
+        p2_expected_utility = 0
+        
+        for root in all_root_states:
+
+            self.cards = root
+
+            self.expected_utility("", 1, 1)
+
+            p1_root = "0" + str(root[0])
+            p2_root = "1" + str(root[1])
+
+            p1_expected_utility += (1/len(all_root_states)) * self.utility_map[p1_root]
+            #p2_expected_utility += (1/len(all_root_states)) * self.expected_utility[p2_root]
+
+        return p1_expected_utility
+        
+
+
+        
+        

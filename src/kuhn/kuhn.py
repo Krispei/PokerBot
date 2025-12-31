@@ -6,25 +6,26 @@ class KuhnPoker:
 
     self.actions = ['p', 'b'] #two actions, passing/folding or bet/calling
 
+    self.terminal_states = ['bb', 'pp', 'pbb', 'bp', 'pbp']
+
   def isGameFinished(self, history):
 
-    if history == 'bb' : return True 
-    if history == 'pp' : return True
-    if history == 'pbb' : return True
-    if history == 'bp' : return True
-    if history == 'pbp' : return True
+    if history in self.terminal_states: return True
 
     return False
 
   def getPlayerToAct(self, history):
 
-    if len(history) == 0 or len(history) == 2 : return 0
-    if len(history) == 1: return 1
+    if len(history) % 2 == 0: 
+      return 0
+    else:
+      return 1
 
   def getPayouts(self, history, cards): 
 
     if self.isGameFinished(history):
 
+      
       # Uncontested cases
       if history == 'bp': return 1
       if history == 'pbp': return -1
