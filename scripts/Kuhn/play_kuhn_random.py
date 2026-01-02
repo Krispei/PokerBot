@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), "../src"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../src"))
 
 from kuhn.kuhn import KuhnPoker
 import random
@@ -15,7 +15,6 @@ def play_vs_random():
 
   print('-----------KUHN POKER-----------')
   print(f'Your card is : {cards[0]}')
-
 
   while not game.isGameFinished(history):
     

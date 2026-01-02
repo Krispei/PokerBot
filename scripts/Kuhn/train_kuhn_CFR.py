@@ -4,7 +4,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../src"))
 
 from kuhn.CFR import CFR_agent
 
-ITERATIONS = 100000 #Iterations used in training
+ITERATIONS = 1000000 #Iterations used in training
 PLOT = False #Plot the final (best) strategy over iterations
 
 def print_infostate(infostate):

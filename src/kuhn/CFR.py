@@ -1,7 +1,9 @@
 from .kuhn import KuhnPoker
 from .nodes import Node
+import matplotlib.pyplot as plt
 import random
 import time
+
 
 class CFR_agent:
 
@@ -14,6 +16,16 @@ class CFR_agent:
         self.cards = []
         self.utility_map = dict()
 
+    def plot(self, data):
+
+        plt.plot(data[0], label="Jack pass probability")
+        plt.plot(data[1], label="Jack bet probability")    
+        plt.legend()
+        plt.xlabel("Iterations")
+        plt.ylabel("Probability")
+        plt.title("Strategy of P2 Jack after a P1 pass over iterations")
+        plt.show()
+
     def train(self):
         
         print(f"Beginning CFR training with {self.iterations} iterations...")
@@ -22,6 +34,8 @@ class CFR_agent:
 
         ten_percent = self.iterations//10
         
+        p2_J_root = [[],[]] #p, b
+
         for i in range(self.iterations):
             
             if i % ten_percent == 0:
@@ -31,12 +45,26 @@ class CFR_agent:
             self.cards = random.sample(self.game.cards, 2)
             
             self.CFR("", 1, 1)
+            
+            if (self.plot_strategy_sum):
+
+                self.calculate_final_strategy()
+
+                p2_J_p = self.infostate_map["10p"].final_strategy[0] if "10p" in self.infostate_map else 0.5
+                p2_J_b = self.infostate_map["10p"].final_strategy[1] if "10p" in self.infostate_map else 0.5
+
+                p2_J_root[0].append(p2_J_p)
+                p2_J_root[1].append(p2_J_b)
 
         end = time.time()
 
         duration = round((end-start),2)
 
         print(f"Training complete in {duration} seconds!")
+        
+        if (self.plot_strategy_sum):
+
+            self.plot(p2_J_root)
 
     def CFR(self, history, pi_i, pi_i_c):
 

@@ -12,10 +12,14 @@ def test_expected_utilities():
     PLOT = False
 
     agent = CFR_agent(ITERATIONS, PLOT)
-
+    agent.train()
     
+    agent.calculate_final_strategy()
+        
+    p2_utility = -agent.calculate_expected_utility()
 
-test_expected_utilities()
+    assert 0.055 < p2_utility < 0.056
+    
 
 
 
