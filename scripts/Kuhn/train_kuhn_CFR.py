@@ -15,7 +15,7 @@ def print_infostate(infostate):
     player = int(infostate[0]) + 1
     card = cards[int(infostate[1])]
 
-    print(f"{card}:  Action is: {infostate[2:] if infostate[2:] != "" else "(ROOT)"}")
+    print(f"{card}:  Action is: {infostate[2:] if infostate[2:] != '' else '(ROOT)'}")
 
 def print_strategy(infostate, agent):
 
