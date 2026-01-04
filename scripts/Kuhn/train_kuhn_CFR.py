@@ -4,8 +4,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../src"))
 
 from kuhn.CFR import CFR_agent
 
-ITERATIONS = 1000000 #Iterations used in training
-PLOT = False #Plot the final (best) strategy over iterations
+ITERATIONS = 25000 #Iterations used in training
+PLOT_STRATEGY = False #Plot the final (best) strategy over iterations
+PLOT_EXPLOITABILITY = True
 
 def print_infostate(infostate):
 
@@ -35,7 +36,7 @@ def main():
     
     # Initializing Kuhn Poker CFR agent
 
-    agent = CFR_agent(ITERATIONS, PLOT)
+    agent = CFR_agent(ITERATIONS, PLOT_STRATEGY, PLOT_EXPLOITABILITY)
 
     # Train agent
 
