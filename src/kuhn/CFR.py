@@ -19,25 +19,6 @@ class CFR_agent:
         
         self.cards = []
         self.exploitability = []
-        self.p2_J_root_strategy = [[],[]]
-
-
-    def plot_p2_strategy(self, data):
-        '''
-        helper function to plot P2 open jack strategy
-        
-        :param self: 
-        :param data: [ [pass probabiliy], [bet probability] ] For player 2 JACK after a player 1 PASS. 
-            The reason for this strategy specifically is because there is only one equilibrium state for player 2 
-        '''
-
-        plt.plot(data[0], label="Jack pass probability")
-        plt.plot(data[1], label="Jack bet probability")    
-        plt.legend()
-        plt.xlabel("Iterations")
-        plt.ylabel("Probability")
-        plt.title("Strategy of P2 Jack after a P1 pass over iterations")
-        plt.show()
 
     def plot_exploitability_func(self, data):
         '''
@@ -57,15 +38,15 @@ class CFR_agent:
         plt.show()
 
 
-    def train(self):
+    def train(self, iterations, exploitability_sample=50):
         
         print(f"Beginning CFR training with {self.iterations} iterations...")
 
         start = time.time()
 
-        ten_percent = self.iterations//10
+        ten_percent = iterations
 
-        for i in range(self.iterations):
+        for i in range(iterations):
             
             if i % ten_percent == 0:
 
@@ -79,18 +60,8 @@ class CFR_agent:
             
             self.calculate_final_strategy()
 
-            if (self.plot_strategy_sum):
-                
-                #Calculate the probability of a player 2 pass with a jack after player 1 passes, and the probability of a plyer 2 bet (as a bluff) after a 
-                #player 1 pass
-                p2_J_p = self.infostate_map["10p"].final_strategy[0] if "10p" in self.infostate_map else 0.5
-                p2_J_b = self.infostate_map["10p"].final_strategy[1] if "10p" in self.infostate_map else 0.5
-
-                self.p2_J_root_strategy[0].append(p2_J_p)
-                self.p2_J_root_strategy[1].append(p2_J_b)
-            
             #calculate exploitability every 50 iterations
-            if (self.plot_exploitability & (i % 50 == 0)):
+            if (self.plot_exploitability & (i % exploitability_sample == 0)):
 
                 self.exploitability.append(self.calculate_exploitability())
 
@@ -99,14 +70,11 @@ class CFR_agent:
         duration = round((end-start),2)
 
         print(f"Training complete in {duration} seconds!")
-        
-        if (self.plot_strategy_sum):
-
-            self.plot_p2_strategy(self.p2_J_root_strategy)
-
+    
         if (self.plot_exploitability):
 
             self.plot_exploitability_func(self.exploitability)
+
 
     def CFR(self, history, pi_i, pi_i_c):
         
@@ -116,23 +84,18 @@ class CFR_agent:
             payout = self.game.getPayouts(history, self.cards)
 
             if self.game.getPlayerToAct(history) == 0:
-
                 return payout
-        
             else:
-
                 return -payout
 
 
         player_to_act = self.game.getPlayerToAct(history)
+        #infostates are as following: player to act, player to act's cards, history
         infostate = str(player_to_act) + str(self.cards[player_to_act]) + history
-        # example, player 1 with a king to act after checking and player 2 betting:
-        # 02pb
 
         if infostate not in self.infostate_map:
-
             self.infostate_map[infostate] = Node(['p', 'b'])
-
+            
         actions = self.game.getActions()
 
         #strategy normalization constant
