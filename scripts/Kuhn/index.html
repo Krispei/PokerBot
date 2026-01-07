@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuhn Poker vs CFR Bot</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1d;
+            --card-color: #f0f0f0;
+            --text-color: #e0e0e0;
+            --accent-color: #4ecca3;
+            --loss-color: #e25858;
+            --secondary-bg: #2d2d34;
+            --coin-color: #ffd700;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 { margin-bottom: 10px; }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Game Area */
+        .game-board {
+            background-color: var(--secondary-bg);
+            padding: 20px;
+            border-radius: 12px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 550px;
+            position: relative;
+        }
+
+        /* Start Screen Overlay */
+        .start-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(26, 26, 29, 0.95);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .start-btn {
+            padding: 20px 40px;
+            font-size: 1.5em;
+            background-color: var(--accent-color);
+            color: #1a1a1d;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(78, 204, 163, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(78, 204, 163, 0.6);
+        }
+
+        .status-bar {
+            background: #333;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            min-height: 1.2em;
+        }
+
+        .pot-display {
+            font-size: 1.2em;
+            color: var(--accent-color);
+            margin: 5px 0;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .card-area {
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            color: #222;
+            width: 80px;
+            height: 110px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            font-weight: bold;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .card.hidden {
+            background: repeating-linear-gradient(
+                45deg,
+                #606dbc,
+                #606dbc 10px,
+                #465298 10px,
+                #465298 20px
+            );
+            color: transparent;
+        }
+
+        /* Coin Visuals */
+        .coin-slot {
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .coin {
+            width: 32px;
+            height: 32px;
+            background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b);
+            border: 2px solid #daa520;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.4), inset 0 0 5px rgba(255,255,255,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7em;
+            color: #5c4302;
+            font-weight: bold;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .coin::after { content: "$"; }
+
+        .coin.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--accent-color);
+            color: #1a1a1d;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        button:hover { transform: scale(1.05); }
+        button:disabled { background-color: #555; cursor: not-allowed; transform: none; }
+        
+        button.train-btn {
+            background-color: #606dbc;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .log-area {
+            background: #111;
+            height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            padding: 10px;
+            font-family: monospace;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .log-entry { margin-bottom: 4px; }
+        .win { color: var(--accent-color); }
+        .lose { color: var(--loss-color); }
+
+        /* Configuration Area */
+        .config-panel {
+            background-color: var(--secondary-bg);
+            padding: 20px;
+            border-radius: 12px;
+            width: 400px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        textarea {
+            width: 100%;
+            height: 350px;
+            background-color: #111;
+            color: #aeaeae;
+            border: 1px solid #444;
+            border-radius: 5px;
+            font-family: monospace;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .info-text {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        #training-status {
+            text-align: center;
+            color: #606dbc;
+            font-weight: bold;
+            margin-top: 10px;
+            min-height: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Kuhn Poker</h1>
+    
+    <div class="stats">
+        <span>Bankroll: <strong id="bankroll">0</strong></span>
+        <span>Hands: <strong id="hands-played">0</strong></span>
+    </div>
+
+    <div class="container">
+        <div class="game-board">
+            
+            <div id="start-overlay" class="start-overlay">
+                <button class="start-btn" onclick="startGame()">Start Game</button>
+            </div>
+
+            <div class="status-bar" id="game-status">Press Start...</div>
+            
+            <div>
+                <div>Bot <span id="bot-role" style="font-size:0.8em; color:#888"></span></div>
+                <div class="card-area">
+                    <div id="bot-card" class="card hidden">?</div>
+                </div>
+                <div class="coin-slot">
+                    <div id="bot-coin" class="coin"></div>
+                </div>
+                <div id="bot-action-display" style="height:20px; color: #aaa;"></div>
+            </div>
+
+            <div class="pot-display">Pot: <span id="pot">2</span></div>
+
+            <div>
+                <div id="player-action-display" style="height:20px; color: #aaa;"></div>
+                <div class="coin-slot">
+                    <div id="player-coin" class="coin"></div>
+                </div>
+                <div class="card-area">
+                    <div id="player-card" class="card">?</div>
+                </div>
+                <div>You <span id="player-role" style="font-size:0.8em; color:#888"></span></div>
+            </div>
+
+            <div class="actions">
+                <button id="btn-pass" onclick="handleInput('pass')" disabled>Check / Fold</button>
+                <button id="btn-bet" onclick="handleInput('bet')" disabled>Bet / Call</button>
+                <button id="btn-next" onclick="startNewHand()" style="background-color: #fff; display:none;">Next Hand</button>
+            </div>
+
+            <div class="log-area" id="game-log"></div>
+        </div>
+
+        <div class="config-panel">
+            <h3>Bot Strategy Configuration</h3>
+            <p class="info-text">
+                Define the probability [Pass, Bet] for the bot.<br>
+                Format: "Card + History" (e.g., "Qp").
+            </p>
+            <textarea id="strategy-input">
+{
+  "J":   [0.8, 0.2],
+  "Q":   [1.0, 0.0],
+  "K":   [0.4, 0.6],
+
+  "Jp":  [0.67, 0.33],
+  "Qp":  [1.0, 0.0],
+  "Kp":  [0.0, 1.0],
+
+  "Jb":  [1.0, 0.0],
+  "Qb":  [0.5, 0.5],
+  "Kb":  [0.0, 1.0],
+
+  "Jpb": [1.0, 0.0],
+  "Qpb": [0.45, 0.55],
+  "Kpb": [0.0, 1.0]
+}
+            </textarea>
+            <div style="display:flex; gap:10px;">
+                <button onclick="updateStrategy()" style="flex:1;">Update Strategy</button>
+            </div>
+            
+            <hr style="border-color:#444; margin: 15px 0;">
+            
+            <button class="train-btn" onclick="runCFRTraining()">Train Bot (Run CFR)</button>
+            <div id="training-status"></div>
+            <div id="config-msg" style="margin-top:5px; font-size:0.8em; color: var(--accent-color); min-height: 1em;"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- GAME CONSTANTS ---
+        const CARDS = ['J', 'Q', 'K'];
+        const CARD_VALUES = { 'J': 1, 'Q': 2, 'K': 3 };
+
+        // --- GAME LOGIC & STATE ---
+        let state = {
+            deck: [],
+            p1Card: null,
+            p2Card: null,
+            pot: 0,
+            history: "", 
+            isUserP1: true, 
+            userBankroll: 0,
+            handsPlayed: 0,
+            gameOver: true
+        };
+
+        let botStrategy = {};
+
+        // --- INIT ---
+        window.onload = function() {
+            try {
+                // Initialize strategy but DO NOT start hand yet
+                updateStrategy();
+            } catch (e) {
+                console.error("Init failed", e);
+            }
+        };
+
+        function startGame() {
+            // Hide overlay
+            document.getElementById('start-overlay').style.display = 'none';
+            // Start the actual game loop
+            startNewHand();
+        }
+
+        // --- UI INTERACTION ---
+        function updateStrategy() {
+            try {
+                const raw = document.getElementById('strategy-input').value;
+                botStrategy = JSON.parse(raw);
+                document.getElementById('config-msg').innerText = "Strategy updated successfully!";
+                setTimeout(() => document.getElementById('config-msg').innerText = "", 3000);
+            } catch (e) {
+                document.getElementById('config-msg').style.color = 'red';
+                document.getElementById('config-msg').innerText = "Invalid JSON. Check syntax.";
+            }
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startNewHand() {
+            try {
+                // CHANGE: Randomly choose P1 or P2 (50/50 chance)
+                state.isUserP1 = Math.random() < 0.5;
+
+                state.deck = shuffle([...CARDS]);
+                state.p1Card = state.deck[0];
+                state.p2Card = state.deck[1];
+                state.history = "";
+                state.pot = 2; 
+                state.gameOver = false;
+                
+                // Reset Visuals
+                document.getElementById('btn-next').style.display = 'none';
+                document.getElementById('bot-card').innerText = "?";
+                document.getElementById('bot-card').classList.add('hidden');
+                document.getElementById('player-action-display').innerText = "";
+                document.getElementById('bot-action-display').innerText = "";
+                document.getElementById('game-status').innerText = "Game in progress...";
+                
+                // Identify Roles
+                const userCard = state.isUserP1 ? state.p1Card : state.p2Card;
+                document.getElementById('player-card').innerText = userCard;
+                document.getElementById('player-role').innerText = state.isUserP1 ? "(Player 1)" : "(Player 2)";
+                document.getElementById('bot-role').innerText = state.isUserP1 ? "(Player 2)" : "(Player 1)";
+                
+                // Force Coin Reset directly
+                const userCoin = document.getElementById('player-coin');
+                const botCoin = document.getElementById('bot-coin');
+                if(userCoin) userCoin.classList.remove('visible');
+                if(botCoin) botCoin.classList.remove('visible');
+
+                updateUI();
+                log(`--- New Hand --- (You are ${state.isUserP1 ? 'P1' : 'P2'})`);
+
+                // If User is P2, Bot (P1) acts first
+                if (!state.isUserP1) {
+                    setTimeout(botTurn, 800);
+                }
+            } catch (error) {
+                console.error("Error starting hand:", error);
+                document.getElementById('game-status').innerText = "Error: " + error.message;
+            }
+        }
+
+        function handleInput(action) {
+            if (state.gameOver) return;
+            const moveChar = (action === 'pass') ? 'p' : 'b';
+            processMove(true, moveChar);
+        }
+
+        function botTurn() {
+            if (state.gameOver) return;
+
+            try {
+                // Determine InfoState for Bot
+                const botCard = state.isUserP1 ? state.p2Card : state.p1Card;
+                const key = botCard + state.history;
+
+                let probs = botStrategy[key];
+                if (!probs) {
+                    console.warn(`Strategy key '${key}' missing. Defaulting to 50/50.`);
+                    probs = [0.5, 0.5];
+                }
+
+                const roll = Math.random();
+                const moveChar = (roll < probs[0]) ? 'p' : 'b'; 
+
+                document.getElementById('bot-action-display').innerText = "Thinking...";
+                
+                setTimeout(() => {
+                    processMove(false, moveChar);
+                }, 600);
+
+            } catch (e) {
+                console.error("Bot logic error:", e);
+            }
+        }
+
+        function processMove(isUser, moveChar) {
+            try {
+                state.history += moveChar;
+                
+                const actionText = (moveChar === 'p') ? "Check/Fold" : "Bet/Call";
+                if (isUser) {
+                    document.getElementById('player-action-display').innerText = actionText;
+                } else {
+                    document.getElementById('bot-action-display').innerText = actionText;
+                }
+
+                if (isTerminalState(state.history)) {
+                    endHand();
+                } else {
+                    updateUI();
+                    if (isUser) {
+                        setTimeout(botTurn, 800);
+                    }
+                }
+            } catch (e) {
+                console.error("Process Move Error:", e);
+            }
+        }
+
+        function isTerminalState(hist) {
+            return ['pp', 'pbp', 'pbb', 'bp', 'bb'].includes(hist);
+        }
+
+        function endHand() {
+            state.gameOver = true;
+            
+            const botCard = state.isUserP1 ? state.p2Card : state.p1Card;
+            const botEl = document.getElementById('bot-card');
+            botEl.classList.remove('hidden');
+            botEl.innerText = botCard;
+
+            // Payout Calculation
+            let payoff = 0; 
+            const p1Val = CARD_VALUES[state.p1Card];
+            const p2Val = CARD_VALUES[state.p2Card];
+            const hist = state.history;
+
+            if (hist === "pp") payoff = (p1Val > p2Val) ? 1 : -1;
+            else if (hist === "pbp") payoff = -1; 
+            else if (hist === "pbb") payoff = (p1Val > p2Val) ? 2 : -2;
+            else if (hist === "bp") payoff = 1; 
+            else if (hist === "bb") payoff = (p1Val > p2Val) ? 2 : -2;
+
+            const userWon = state.isUserP1 ? (payoff > 0) : (payoff < 0);
+            const amount = Math.abs(payoff);
+
+            state.userBankroll += userWon ? amount : -amount;
+            state.handsPlayed++;
+
+            const resultText = userWon ? `You Won ${amount}!` : `You Lost ${amount}.`;
+            const resultClass = userWon ? 'win' : 'lose';
+            document.getElementById('game-status').innerHTML = `<span class="${resultClass}">${resultText}</span>`;
+            
+            log(`Result: ${resultText} (Bot had ${botCard})`);
+            updateUI();
+        }
+
+        function updateUI() {
+            try {
+                // 1. Basic Stats
+                document.getElementById('pot').innerText = calculatePot(state.history);
+                document.getElementById('bankroll').innerText = state.userBankroll;
+                document.getElementById('hands-played').innerText = state.handsPlayed;
+                
+                const btnPass = document.getElementById('btn-pass');
+                const btnBet = document.getElementById('btn-bet');
+                const btnNext = document.getElementById('btn-next');
+
+                // 2. Button State Logic
+                if (state.gameOver) {
+                    btnPass.disabled = true;
+                    btnBet.disabled = true;
+                    // CRITICAL FIX: Ensure this runs even if visuals fail later
+                    btnNext.style.display = 'inline-block'; 
+                } else {
+                    let isUserTurn = false;
+                    const h = state.history;
+                    
+                    if (state.isUserP1) {
+                        // User is P1: Acts first ("") or response to check-bet ("pb")
+                        if (h === "" || h === "pb") isUserTurn = true;
+                    } else {
+                        // User is P2: Acts vs check ("p") or vs bet ("b")
+                        if (h === "p" || h === "b") isUserTurn = true;
+                    }
+                    
+                    btnPass.disabled = !isUserTurn;
+                    btnBet.disabled = !isUserTurn;
+                    
+                    // Button Labels
+                    if (h === "" || h === "p" || h === "pp") {
+                        btnPass.innerText = "Check";
+                        btnBet.innerText = "Bet";
+                    } else {
+                        btnPass.innerText = "Fold";
+                        btnBet.innerText = "Call";
+                    }
+                }
+
+                // 3. Render Coins (Protected)
+                try {
+                    renderCoins();
+                } catch(err) {
+                    console.warn("Coin render issue (ignoring):", err);
+                }
+
+            } catch (e) {
+                console.error("UI Update Error:", e);
+            }
+        }
+
+        function renderCoins() {
+            let p1HasBet = false;
+            let p2HasBet = false;
+            const h = state.history;
+
+            for (let i = 0; i < h.length; i++) {
+                if (h[i] === 'b') {
+                    if (i % 2 === 0) p1HasBet = true; // P1
+                    else p2HasBet = true;             // P2
+                }
+            }
+
+            let userHasCoin = false;
+            let botHasCoin = false;
+
+            if (state.isUserP1) {
+                userHasCoin = p1HasBet;
+                botHasCoin = p2HasBet;
+            } else {
+                userHasCoin = p2HasBet;
+                botHasCoin = p1HasBet;
+            }
+
+            const userCoinEl = document.getElementById('player-coin');
+            const botCoinEl = document.getElementById('bot-coin');
+
+            if (userCoinEl && botCoinEl) {
+                if (userHasCoin) userCoinEl.classList.add('visible');
+                else userCoinEl.classList.remove('visible');
+
+                if (botHasCoin) botCoinEl.classList.add('visible');
+                else botCoinEl.classList.remove('visible');
+            }
+        }
+
+        function calculatePot(hist) {
+            let pot = 2; 
+            const bets = (hist.match(/b/g) || []).length;
+            pot += bets;
+            return pot;
+        }
+
+        function log(msg) {
+            const el = document.getElementById('game-log');
+            if (el) {
+                const entry = document.createElement('div');
+                entry.className = "log-entry";
+                entry.innerText = msg;
+                el.prepend(entry);
+            }
+        }
+
+        // ==========================================
+        // CFR AI ENGINE
+        // ==========================================
+
+        class Node {
+            constructor() {
+                this.regretSum = [0.0, 0.0];
+                this.strategy = [0.0, 0.0];
+                this.strategySum = [0.0, 0.0];
+            }
+        }
+
+        class CFRAgent {
+            constructor() {
+                this.infostateMap = {};
+                this.deck = [0, 1, 2]; 
+            }
+
+            train(iterations) {
+                for (let i = 0; i < iterations; i++) {
+                    let cards = [...this.deck];
+                    for (let j = cards.length - 1; j > 0; j--) {
+                        const k = Math.floor(Math.random() * (j + 1));
+                        [cards[j], cards[k]] = [cards[k], cards[j]];
+                    }
+                    const dealt = cards.slice(0, 2); 
+
+                    this.cfr("", 1, 1, dealt);
+                }
+            }
+
+            cfr(history, p0, p1, cards) {
+                const plays = history.length;
+                const player = plays % 2; 
+                
+                if (['pp', 'pbp', 'pbb', 'bp', 'bb'].includes(history)) {
+                    const p1Card = cards[0];
+                    const p2Card = cards[1];
+                    let payout = 0;
+
+                    if (history === "pp") payout = (p1Card > p2Card) ? 1 : -1;
+                    else if (history === "pbp") payout = -1;
+                    else if (history === "pbb") payout = (p1Card > p2Card) ? 2 : -2;
+                    else if (history === "bp") payout = 1;
+                    else if (history === "bb") payout = (p1Card > p2Card) ? 2 : -2;
+
+                    return (player === 0) ? payout : -payout;
+                }
+
+                const card = cards[player];
+                const infostate = "" + player + card + history;
+
+                if (!this.infostateMap[infostate]) {
+                    this.infostateMap[infostate] = new Node();
+                }
+                const node = this.infostateMap[infostate];
+
+                let regretSumSum = 0;
+                for (let a = 0; a < 2; a++) {
+                    regretSumSum += Math.max(node.regretSum[a], 0);
+                }
+
+                for (let a = 0; a < 2; a++) {
+                    if (regretSumSum > 0) {
+                        node.strategy[a] = Math.max(node.regretSum[a], 0) / regretSumSum;
+                    } else {
+                        node.strategy[a] = 0.5;
+                    }
+                }
+
+                const actions = ['p', 'b'];
+                let nodeUtil = 0;
+                let util = [0, 0];
+
+                for (let a = 0; a < 2; a++) {
+                    const nextHistory = history + actions[a];
+                    
+                    if (player === 0) {
+                        util[a] = -this.cfr(nextHistory, p0 * node.strategy[a], p1, cards);
+                    } else {
+                        util[a] = -this.cfr(nextHistory, p0, p1 * node.strategy[a], cards);
+                    }
+                    nodeUtil += node.strategy[a] * util[a];
+                }
+
+                for (let a = 0; a < 2; a++) {
+                    const regret = util[a] - nodeUtil;
+                    const prob = (player === 0) ? p1 : p0; 
+                    
+                    node.regretSum[a] += prob * regret;
+                    node.strategySum[a] += prob * node.strategy[a];
+                }
+
+                return nodeUtil;
+            }
+
+            getFinalStrategy() {
+                const cardMap = ['J', 'Q', 'K'];
+                const tempStrategy = {};
+
+                for (const [key, node] of Object.entries(this.infostateMap)) {
+                    const cardIndex = parseInt(key[1]);
+                    const history = key.substring(2);
+                    const cardChar = cardMap[cardIndex];
+                    const uiKey = cardChar + history;
+                    
+                    let sum = node.strategySum[0] + node.strategySum[1];
+                    let pPass = 0, pBet = 0;
+                    if (sum > 0) {
+                        pPass = node.strategySum[0] / sum;
+                        pBet = node.strategySum[1] / sum;
+                    } else {
+                        pPass = 0.5; pBet = 0.5;
+                    }
+
+                    tempStrategy[uiKey] = [
+                        parseFloat(pPass.toFixed(3)), 
+                        parseFloat(pBet.toFixed(3))
+                    ];
+                }
+
+                const orderedKeys = [
+                    "J", "Q", "K",
+                    "Jp", "Qp", "Kp",
+                    "Jb", "Qb", "Kb",
+                    "Jpb", "Qpb", "Kpb"
+                ];
+
+                const finalStrategy = {};
+                orderedKeys.forEach(k => {
+                    finalStrategy[k] = tempStrategy[k] || [0.5, 0.5];
+                });
+
+                return finalStrategy;
+            }
+        }
+
+        function runCFRTraining() {
+            const statusEl = document.getElementById('training-status');
+            statusEl.innerText = "Training... (Please wait)";
+            
+            setTimeout(() => {
+                try {
+                    const iterations = 50000; 
+                    const agent = new CFRAgent();
+                    
+                    const start = performance.now();
+                    agent.train(iterations);
+                    const end = performance.now();
+                    
+                    const strategy = agent.getFinalStrategy();
+                    
+                    // --- SAFE FORMATTING (No Regex) ---
+                    const parts = [];
+                    for (const key in strategy) {
+                        const val = strategy[key];
+                        parts.push(`  "${key}": [${val[0]}, ${val[1]}]`);
+                    }
+                    const jsonStr = "{\n" + parts.join(",\n") + "\n}";
+                    // ----------------------------------
+
+                    document.getElementById('strategy-input').value = jsonStr;
+                    updateStrategy();
+                    
+                    statusEl.innerText = `Training Complete (${iterations} iters in ${((end-start)/1000).toFixed(2)}s)`;
+                } catch (e) {
+                    console.error("Training Error:", e);
+                    statusEl.innerText = "Error during training.";
+                }
+            }, 100);
+        }
+    </script>
+</body>
+</html>
