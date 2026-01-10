@@ -25,7 +25,14 @@ class leduc():
         self.actions = ['r','c','f', 'p'] # bet, 'r': raise, 'c': call, 'f': fold, 'p': check/pass
 
     def terminal(self, history):
-
+        '''
+        Returns whether or not the game has finished based on the history
+                
+        :param self: self
+        :param history: string history
+        :return: True for if the game is over, False for if not
+        :rtype: Boolean
+        '''
         #if any player folds, the game instantly terminates
         if history[-1] == 'f':
             return True
@@ -39,7 +46,14 @@ class leduc():
             return True
 
     def r1_over(self, history):
-
+        '''
+        Returns whether or not the game is ready to move on to round 2 / on round 2
+        
+        :param self: Self
+        :param history: string history
+        :return: True for if the game is ready to move onto round 2 / on round 2, False otherwise
+        :rtype: Boolean
+        '''
         if ':' in history:
             return True
         
@@ -50,18 +64,32 @@ class leduc():
             return True
         
     def get_round(self, history):
-
+        '''
+        Returns which round the game is currently on
+        
+        :param self: self
+        :param history: string history
+        :return: 1 for round 1, 2 for round 2
+        :rtype: Int
+        '''
         if ':' in history:
             return 2
         else:
             return 1
 
     def player_to_act(self, history):
+        '''
+        GETS THE PLAYER TO ACT NEXT BASED ON HISTORY: Player 1: 0, Player 2: 1
         
-        #examples of histories:  'c' - P1 checks, P2 to act
-        #                        'br' - P1 bets, P2 raise, P1 to act
-        #                        'bc:' - P1 bets, P2 calls, P1 to act
+        examples of histories:  'c' - P1 checks, P2 to act
+                                'br' - P1 bets, P2 raise, P1 to act
+                                'bc:' - P1 bets, P2 calls, P1 to act
 
+        :param self: Description
+        :param history: string history
+        :return: Returns the player next to act (0,1) for (P1, P2)
+        :rtype: Int
+        '''
         if self.get_round(history=history) == 2:    
 
             if len(history) % 2 == 1: 
@@ -77,7 +105,6 @@ class leduc():
                 return 0 #P2
         
     def payout(self, history, cards):
-        
         '''
         THIS FUNCTION RETURNS THE PAYOUT TO PLAYER 1 ALWAYS
         
@@ -90,8 +117,9 @@ class leduc():
         ex) bf -> pot = 2 (antes) + 1 (round 1), payout = 1 (ante), 0 (round 1)
         :param self: 
         :param history: String text that holds the history of the hand so far
+        :return: Returns the payout for Player 1 always
+        :rtype: Int
         '''
-
         if not self.terminal(history=history):
             return 0
         
