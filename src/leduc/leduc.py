@@ -99,18 +99,22 @@ class leduc():
         :rtype: Int
         '''
         if self.get_round(history=history) == 2:    
+            
+            r1, sep, r2  = history.partition(':')
 
-            if len(history) % 2 == 1: 
+            if len(r2) % 2 == 0: 
                 return 0 #P1
             else: 
                 return 1 #P2
             
         else: 
 
-            if len(history) % 2 == 1: 
-                return 1 #P2
+            if len(history) % 2 == 0: 
+                return 0 #P1
             else: 
-                return 0 #P2
+                return 1 #P2
+        
+
         
     def payout(self, history, cards):
         '''
@@ -131,79 +135,92 @@ class leduc():
         if not self.terminal(history=history):
             return 0
         
-        round_1, separator, round_2 = history.partition(':')
-        chips_committed = [1,1]
+        # Initialize committed chips (usually 1 chip ante per player)
+        committed = [1, 1]
         
-        r1_raises = 0
+        # Split the history into Round 1 and Round 2
+        if ':' in history:
+            r1, _, r2 = history.partition(':')
+        else:
+            r1 = history
+            r2 = ""
+            
+        # --- PROCESS ROUND 1 ---
+        # Fixed bet size is 1
+        bet_size = 1
+        
+        # Round 1 always starts with Player 1 (Index 0)
+        current_player = 0
+        
+        for action in r1:
+            opponent = 1 - current_player
+            
+            if action == 'r':
+                # Match opponent + bet size
+                committed[current_player] = committed[opponent] + bet_size
+            
+            elif action == 'c':
+                # Match opponent
+                committed[current_player] = committed[opponent]
+            
+            elif action == 'f':
+                # Player folded. Opponent wins the folder's committed chips.
+                # If P1 folded (current=0), P1 loses their chips (-committed[0])
+                # If P2 folded (current=1), P1 wins P2's chips (+committed[1])
+                if current_player == 0:
+                    return -committed[0]
+                else:
+                    return committed[1]
+            
+            # Switch turn
+            current_player = 1 - current_player
 
+        # --- PROCESS ROUND 2 ---
+        # Fixed bet size is 2 (Leduc rules usually double bets in R2)
+        bet_size = 2
+        
+        # Round 2 always starts with Player 1 (Index 0)
+        current_player = 0
+        
+        for action in r2:
+            opponent = 1 - current_player
+            
+            if action == 'r':
+                committed[current_player] = committed[opponent] + bet_size
+            
+            elif action == 'c':
+                committed[current_player] = committed[opponent]
+            
+            elif action == 'f':
+                if current_player == 0:
+                    return -committed[0]
+                else:
+                    return committed[1]
+            
+            current_player = 1 - current_player
 
-        for i in range(len(round_1)):
-            player = (i % 2)
-            if round_1[i] == 'c':
-                if r1_raises == 1:
-                    chips_committed[player] += 1
-                else:
-                    chips_committed[player] += 1
-                break
-            elif round_1[i] == 'r':
-                if r1_raises == 1:
-                    chips_committed[player] += 2
-                else:
-                    chips_committed[player] += 1
-                r1_raises += 1
-            elif round_1[i] == 'f':
-                if player == 0:
-                    return -chips_committed[player]
-                else:
-                    return chips_committed[player]
-            else:
-                continue
-
-        r2_raises = 0
-
-        for i in range(len(round_2)):
-            player = (i % 2)
-            if round_2[i] == 'c':
-                if r2_raises == 1:
-                    chips_committed[player] += 2
-                else:
-                    chips_committed[player] += 2
-                break
-            elif round_2[i] == 'r':
-                if r2_raises == 1:
-                    chips_committed[player] += 4
-                else:
-                    chips_committed[player] += 2
-                r2_raises += 1
-            elif round_2[i] == 'f':
-                if player == 0:
-                    return -chips_committed[player]
-                else:
-                    return chips_committed[player]
-            else:
-                continue
-
-        #showdown cases:
+        # --- SHOWDOWN ---
         p1_card = cards[0]
         p2_card = cards[1]
         community_card = cards[2]
 
+        # 1. Check for Pairs (Highest ranking hand in Leduc)
+        # Note: In Leduc with 6 cards (2 suits), it's impossible for 
+        # BOTH players to pair the board (there is only 1 matching card left).
         if p1_card == community_card:
-            
-            return chips_committed[1]
+            return committed[1] # P1 wins P2's chips
         
         if p2_card == community_card:
-
-            return -chips_committed[0]
+            return -committed[0] # P1 loses their chips
         
+        # 2. High Card
         if p1_card > p2_card:
-
-            return chips_committed[1]
+            return committed[1]
         
         if p2_card > p1_card:
-
-            return -chips_committed[0]
+            return -committed[0]
         
+        # 3. Draw (Equal ranks, no pairs)
         return 0
     
     def actions(self, history):

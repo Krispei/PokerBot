@@ -20,7 +20,7 @@ def print_infostate(infostate):
         print(f"{card}:  Action is: (ROOT)")
     elif infostate[2] not in ['f','p', 'c', 'r']:
         public_card = cards[int(infostate[2])]
-        print(f"{card}:  Action is: {infostate[3:] if infostate[3:] != '' else '(ROOT)'}")
+        print(f"{card}:  Public card: {public_card}, Action is: {infostate[3:] if infostate[3:] != '' else '(ROOT)'}")
     else:
         print(f"{card}:  Action is: {infostate[2:] if infostate[2:] != '' else '(ROOT)'}")
 
@@ -59,7 +59,7 @@ def main():
             p2_infostates.append(infostate)
    
     print("-----------  GENERAL STATISTICS -----------")
-
+    print(f"Final Exploitability: {agent.exploitability[-1]}")
     print("----------- PLAYER 1 STRATEGIES -----------")
     p1_infostates.sort()
     for infostate in p1_infostates: 
