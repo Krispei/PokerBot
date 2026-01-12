@@ -124,69 +124,64 @@ class leduc():
             return 0
         
         round_1, separator, round_2 = history.partition(':')
-         
-        chips_committed = [0,0]
-        # Round 1 chips committed
-
-        payout = 0
-
-        # Histories (given player 1 wins):
-        # Round 1 / 2:
-        # pp - 1
-        # prf 
-        # prc
-        # prrf
-        # prrc
-        # rf
-        # rc
-        # rrf
-        # rrc
+        print(round_1, round_2)
+        chips_committed = [1,1]
         
         r1_raises = 0
 
 
         for i in range(len(round_1)):
-            player = ~(round_1 % 2)
+            player = (i % 2)
             if round_1[i] == 'c':
+                print("c")
                 if r1_raises == 1:
-                    chips_committed[player] = 1
+                    chips_committed[player] += 1
                 else:
-                    chips_committed[player] = 2
+                    chips_committed[player] += 1
                 break
             elif round_1[i] == 'r':
+                print("r")
                 if r1_raises == 1:
-                    chips_committed[player] = 2
+                    chips_committed[player] += 2
                 else:
-                    chips_committed[player] = 1
+                    chips_committed[player] += 1
                 r1_raises += 1
             elif round_1[i] == 'f':
                 if player == 0:
                     return -chips_committed[player]
                 else:
                     return chips_committed[player]
+            else:
+                continue
 
         r2_raises = 0
 
         for i in range(len(round_2)):
-            player = ~(round_1 % 2)
-            if round_1[i] == 'c':
+            player = (i % 2)
+            if round_2[i] == 'c':
+                print("2c")
                 if r2_raises == 1:
                     chips_committed[player] += 2
                 else:
-                    chips_committed[player] += 4
+                    chips_committed[player] += 2
                 break
-            elif round_1[i] == 'r':
+            elif round_2[i] == 'r':
+                print("2r")
                 if r2_raises == 1:
                     chips_committed[player] += 4
                 else:
                     chips_committed[player] += 2
-                r1_raises += 1
-            elif round_1[i] == 'f':
+                r2_raises += 1
+            elif round_2[i] == 'f':
                 if player == 0:
                     return -chips_committed[player]
                 else:
                     return chips_committed[player]
-        
+            else:
+                continue
+
+        print(chips_committed)
+
         #showdown cases:
         p1_card = cards[0]
         p2_card = cards[1]
@@ -208,5 +203,5 @@ class leduc():
 
             return -chips_committed[0]
         
-
+        return 0
         
