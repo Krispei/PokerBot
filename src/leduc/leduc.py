@@ -20,9 +20,7 @@ class leduc():
 
     def __init__(self):
         
-        self.cards = ['0h', '1h', '2h', '0s', '1s', '2s']
-
-        self.actions = ['r','c','f', 'p'] # bet, 'r': raise, 'c': call, 'f': fold, 'p': check/pass
+        self.cards = [0,0,1,1,2,2]
 
     def terminal(self, history):
         '''
@@ -204,4 +202,40 @@ class leduc():
             return -chips_committed[0]
         
         return 0
+    
+    def actions(self, history):
+
+        if history == '':
+
+            return ['p', 'r']
         
+        if history[-1] == 'p':
+            
+            return ['p', 'r']
+        
+        if history[-1] == 'r':
+            
+            num_raises = 0
+
+            if ':' in history:
+
+                r1, sep, r2 = history.partition(':')
+                
+                num_raises = r2.count('r')
+            
+            else:
+
+                num_raises = history.count('r')
+
+            if num_raises > 1:
+
+                return ['f', 'c']
+            
+            else:
+
+                return ['f', 'c', 'r']
+        
+        return []
+
+ 
+                
