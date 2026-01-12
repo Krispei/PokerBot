@@ -16,7 +16,9 @@ def print_infostate(infostate):
     card = cards[int(infostate[1])]
     public_card = ''
 
-    if infostate[2] not in ['f','p', 'c', 'r']:
+    if len(infostate) == 2:
+        print(f"{card}:  Action is: (ROOT)")
+    elif infostate[2] not in ['f','p', 'c', 'r']:
         public_card = cards[int(infostate[2])]
         print(f"{card}:  Action is: {infostate[3:] if infostate[3:] != '' else '(ROOT)'}")
     else:
@@ -28,7 +30,7 @@ def print_strategy(infostate, agent):
 
     for action in agent.infostate_map[infostate].actions:
         
-        probabilities += f"{action} : {agent.infostate_map[infostate].final_strategy[action]}, " 
+        probabilities += f"{action} : {round(agent.infostate_map[infostate].final_strategy[action], 2)}, " 
         
     print(probabilities)
 

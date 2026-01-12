@@ -32,6 +32,9 @@ class leduc():
         :rtype: Boolean
         '''
         #if any player folds, the game instantly terminates
+        if history == '':
+            return False
+        
         if history[-1] == 'f':
             return True
 
@@ -42,6 +45,8 @@ class leduc():
         #if both players check round 2, the game ends
         if ':' in history and history[-2:] == 'pp':
             return True
+        
+        return False
 
     def r1_over(self, history):
         '''
@@ -52,6 +57,9 @@ class leduc():
         :return: True for if the game is ready to move onto round 2 / False otherwise
         :rtype: Boolean
         '''
+        if history == '':
+            return False
+
         if ':' in history:
             return False
         
@@ -124,7 +132,6 @@ class leduc():
             return 0
         
         round_1, separator, round_2 = history.partition(':')
-        print(round_1, round_2)
         chips_committed = [1,1]
         
         r1_raises = 0
@@ -133,14 +140,12 @@ class leduc():
         for i in range(len(round_1)):
             player = (i % 2)
             if round_1[i] == 'c':
-                print("c")
                 if r1_raises == 1:
                     chips_committed[player] += 1
                 else:
                     chips_committed[player] += 1
                 break
             elif round_1[i] == 'r':
-                print("r")
                 if r1_raises == 1:
                     chips_committed[player] += 2
                 else:
@@ -159,14 +164,12 @@ class leduc():
         for i in range(len(round_2)):
             player = (i % 2)
             if round_2[i] == 'c':
-                print("2c")
                 if r2_raises == 1:
                     chips_committed[player] += 2
                 else:
                     chips_committed[player] += 2
                 break
             elif round_2[i] == 'r':
-                print("2r")
                 if r2_raises == 1:
                     chips_committed[player] += 4
                 else:
@@ -179,8 +182,6 @@ class leduc():
                     return chips_committed[player]
             else:
                 continue
-
-        print(chips_committed)
 
         #showdown cases:
         p1_card = cards[0]

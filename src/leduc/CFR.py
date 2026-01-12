@@ -39,15 +39,15 @@ class CFR_agent:
         plt.show()
 
 
-    def train(self, iterations, exploitability_sample=50):
+    def train(self):
         
         print(f"Beginning CFR training with {self.iterations} iterations...")
 
         start = time.time()
 
-        ten_percent = iterations
+        ten_percent = self.iterations // 10
 
-        for i in range(iterations):
+        for i in range(self.iterations):
             
             if i % ten_percent == 0:
 
@@ -73,7 +73,7 @@ class CFR_agent:
         #Visiting a terminal node
         if self.game.terminal(history):
             
-            payout = self.game.payouts(history, self.cards)
+            payout = self.game.payout(history, self.cards)
 
             if self.game.player_to_act(history) == 0:
                 return payout
@@ -148,7 +148,7 @@ class CFR_agent:
             # Arg 1 (Next Self) = Current Opponent (pi_i_c)
             # Arg 2 (Next Opp)  = Current Self * Strategy (pi_i * strategy_a)
             
-            value_a = -self.CFR(history + action, pi_i_c, pi_i * strategy_a)
+            value_a = -self.CFR(history + action, pi_i_c, pi_i * strategy_a, pi_c)
 
             self.infostate_map[infostate].value[action] = value_a
             node_expected_value += strategy_a * value_a
@@ -157,7 +157,7 @@ class CFR_agent:
         for i, action in enumerate(actions):
 
             #compare v(I,a) against v_sig_i
-            value_a = self.infostate_map[infostate].get(action, 0)
+            value_a = self.infostate_map[infostate].value.get(action, 0)
             strategy_a = self.infostate_map[infostate].strategy.get(action,0)
 
             #r(I,a) = v(I,a) - v_sig_i
