@@ -4,7 +4,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../src"))
 
 from leduc.CFR import CFR_agent
 
-ITERATIONS = 25000#Iterations used in training
+ITERATIONS = 100000#Iterations used in training
 PLOT_STRATEGY = False #Plot the final (best) strategy over iterations
 PLOT_EXPLOITABILITY = True
 
